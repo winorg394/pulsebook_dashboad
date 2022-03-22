@@ -1,6 +1,9 @@
 import React, { FC, useContext, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm } from "react-hook-form";
 import ApiContext from '../../context/ApiContext';
+import ApiService from '../../services/ApiService';
+import { CategoryEdit } from './CategoryEdit';
+import { CategoryView } from './CategoryView';
 interface Props {
     // any props that come into the component
 }
@@ -9,8 +12,7 @@ interface Props {
 
 
 const Category: React.FC = () => {
-    const { register, handleSubmit, watch } = useForm();
-    const Api: any = useContext(ApiContext);
+    const Api = new ApiService();
     const d = new Date();
 
     const [authors, setauthor] = useState<any>([]);
@@ -22,6 +24,11 @@ const Category: React.FC = () => {
 
     const [isLoad, setisLoad] = useState(false);
     const [Msg, seterrorMsg] = useState();
+
+    const { register, handleSubmit, watch, formState: { errors } } = useForm();
+
+    // console.log(watch("wording"));
+
     useEffect(() => {
 
         getAuthors();
@@ -42,23 +49,40 @@ const Category: React.FC = () => {
         console.log(category);
 
     }
+    // const onSubmit = (data: any) => console.log(data);
+
     const onSubmit = async (data: any) => {
         setisLoad(true);
+        // return console.log(logo[0]);
 
-    
-/*         var response = await Api.uploadFile(logo[0]);
-        console.log(response);
+        // console.log(data);
+
+
+
+        var response = await Api.uploadFile(data.icon[0]);
+
+
+
         if (response.data.success) {
             const credentials = {
-                'wording': wording,
-                'sub_category_id': category,
+                'wording': data.wording,
+                'sub_category_id': data.sub_category_id,
                 'icon': response.data.data,
             }
-            var responsepost = await Api.postData('category/liste', credentials);
-            if (responsepost.data.success) {
+            //    console.log(credentials);
+
+            var responsepost = await Api.postData('category/add', credentials);
+            if (responsepost.data.data.success) {
+
                 alert("Bien envoyer");
+                setisLoad(false);
+                getAuthors();
+
             } else {
                 setisLoad(false);
+                alert("Bien nononon");
+                getAuthors();
+
                 alert(response.data.message)
 
             }
@@ -68,7 +92,7 @@ const Category: React.FC = () => {
             seterrorMsg(response.data)
             setisLoad(false);
 
-        } */
+        }
 
         alert("Votre demande à été envoyée avec succès");
 
@@ -82,12 +106,12 @@ const Category: React.FC = () => {
 
     const getAuthors = async () => {
 
-console.log("server response");
+        console.log("server response");
 
-        var response = await Api.getData('category');
+        var response = await Api.getData('category/list');
         console.log("server response franky steve");
 
-           console.log(response.data);
+        console.log(response.data);
 
 
         if (response.status == 200) {
@@ -136,6 +160,7 @@ console.log("server response");
                                     <table className="table table-striped table tablesorter" id="ipi-table">
                                         <thead className="thead-dark">
                                             <tr>
+                                                <th className="text-center">id</th>
                                                 <th className="text-center">Wording</th>
                                                 <th className="text-center">icon</th>
                                                 <th className="text-center">sub category</th>
@@ -146,14 +171,14 @@ console.log("server response");
                                         <tbody className="text-center">
                                             {authors.map((item: any) => (
                                                 <tr>
+                                                    <td>{item.id}</td>
                                                     <td>{item.wording}</td>
-                                                    <td>{item.icon}</td>
+                                                    <td><img className="rounded-circle me-2" width="80" height="80" src={item.icon} /> </td>
                                                     <td>{item.sub_category_id}</td>
 
                                                     <td className="text-center align-middle" style={{ maxHeight: "60px", height: "60px" }}>
-                                                        <a type="button" data-bs-toggle="modal" data-bs-target="#modal-1" className="btn btnMaterial btn-flat primary semicircle" onClick={() => (setUserInfo(item)
-                                                        )}  ><i className="far fa-eye"></i></a>
-                                                        <a className="btn btnMaterial btn-flat success semicircle" role="button" href="#"><i className="fas fa-pen"></i></a>
+                                                        <a type="button" data-bs-toggle="modal" data-bs-target="#ViewCat" className="btn btnMaterial btn-flat primary semicircle" onClick={() => (setUserInfo(item))}  ><i className="far fa-eye"></i></a>
+                                                        <a className="btn btnMaterial btn-flat success semicircle" data-bs-toggle="modal" data-bs-target="#EditCat" role="button"  onClick={() => (setUserInfo(item))}  href="#"><i className="fas fa-pen"></i></a>
                                                         <a className="btn btnMaterial btn-flat accent btnNoBorders checkboxHover" role="button" style={{ marginLeft: "5px" }} data-bs-toggle="modal" data-bs-target="#delete-modal" href="#"><i className="fas fa-trash btnNoBorders" style={{ color: "#DC3545" }}></i></a>
 
 
@@ -233,13 +258,13 @@ console.log("server response");
                             <form className="mx-5" method="post" onSubmit={handleSubmit(onSubmit)}>
                                 <h2 className="visually-hidden">Login Form</h2>
                                 <div className="mb-3">
-                                    <input className="form-control" type="text" name="wording" placeholder="wording" onChange={handlewording} /></div>
-
+                                    <input className="form-control" type="text" placeholder="wording"  {...register("wording", { required: true })} /></div>
+                                {errors.wording && <span style={{ color: "red" }}>This field is required</span>}
                                 <div className="mb-3">
                                     <label className="form-label">Sous Categorie
 
 
-                                        <select className="d-inline-block form-select form-select-xl" onChange={handlecat} style={{ left: "12px", marginLeft: "12px" }}>
+                                        <select className="d-inline-block form-select form-select-xl"  {...register("sub_category_id")} style={{ left: "12px", marginLeft: "12px" }}>
 
                                             {authors.map((item: any) => (
                                                 <option value={item.id}>{item.wording}</option>
@@ -251,7 +276,8 @@ console.log("server response");
 
                                 </div>
                                 <div className="mb-3">
-                                    <input className="form-control" type="file" name="icon" onChange={onFileChangeLogo} placeholder="icon" /></div>
+                                    <input className="form-control" type="file"  {...register("icon")} placeholder="icon" /></div>
+                                {errors.wording && <span style={{ color: "red" }}>Icon is required</span>}
                                 <div className="mb-3">
                                     {!isLoad && <input type="submit" className="btn btn-primary d-block w-100" value="M'inscrire" />}
                                     {isLoad && <input type="submit" className="btn btn-primary d-block w-100" value="En cours..." />}
@@ -266,6 +292,8 @@ console.log("server response");
                     </div>
                 </div>
             </div>
+              <CategoryView item={{CurentAuthorData}} />
+              <CategoryEdit item={{CurentAuthorData}} authors={{authors}} />
         </>
     )
 }

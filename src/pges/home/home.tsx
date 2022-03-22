@@ -1,5 +1,9 @@
+import axios from 'axios';
 import React, { useContext, useEffect, useState } from 'react';
 import ApiContext from '../../context/ApiContext';
+import { BookAdd } from './BookAdd';
+import { BookEdit } from './BookEdit';
+import { BookView } from './BookView';
 
 
 function Home() {
@@ -9,18 +13,28 @@ function Home() {
     const [books, setbooks] = useState<any>([]);
     const [allLinks, setLinks] = useState<any>([]);
     const [isload, setload] = useState(true);
-    useEffect(() => {
+    const [CurentAuthorData, setCurrentAuthoData] = useState<any>([]);
+    const [authors, setauthor] = useState<any>([]);
+    const [category, setCategory] = useState<any>([]);
+    const [AuthorForSearch, setAuthorForSearch] = useState<any>([]);
+    const [UserForSearch, setUserForSearch] = useState<any>([]);
 
-        getBooks();
+    useEffect(() => {
+        getCategory();
+        getBooks(null);
+        getUsers();
+  /*       getAuthor();
+        getUser(); */
         console.log(books);
 
 
     }, [])
 
-    const getBooks = async () => {
+    const getBooks = async (url: any) => {
         setload(true);
 
-        var response = await Api.getData('getbooks');
+
+        var response = url == null ? await Api.getData('getbooks') : await axios.get(url);
         console.log("ok server 125487");
 
         //   console.log(response.data.data);
@@ -41,8 +55,113 @@ function Home() {
             }
         }
     }
+    const setUserInfo = async (data: any) => {
+        setCurrentAuthoData(data);
+    }
+
+    const getUsers = async () => {
 
 
+        var response = await Api.getData('listeutilisateur');
+
+        //   console.log(response.data.data);
+
+
+        if (response.status == 200) {
+            if (response.data.data.length > 0) {
+                console.log("ok server 2");
+
+
+                setauthor(response.data.data);
+
+
+                console.log(response.data.data);
+
+            }
+            else {
+
+            }
+        } else {
+            console.log("ok server 125487");
+
+        }
+    }
+    const getCategory = async () => {
+
+        console.log("server response");
+
+        var response = await Api.getData('category/list');
+        console.log("server response franky steve");
+
+        console.log(response.data);
+
+
+        if (response.status == 200) {
+            if (response.data.data.length > 0) {
+                console.log("ok server 2");
+                setCategory(response.data.data);
+                console.log(response.data.data);
+
+            }
+            else {
+
+            }
+        } else {
+            console.log("ok server 125487");
+
+        }
+    }
+
+   /*  const getAuthor = async () => {
+        console.log("authors datat from server");
+
+        var responseAuthor = await Api.getData("getAuthorlistbyauthor");
+        console.log("authors datat from server 2154");
+
+        console.log(responseAuthor.data.data);
+
+        if (responseAuthor.data.success) {
+            setAuthorForSearch(responseAuthor.data.data)
+        }
+
+
+    }
+
+    const getUser = async () => {
+
+        var responseAuthor = await Api.getData("getAuthorlist");
+        console.log("user data from server");
+
+        console.log(responseAuthor.data.data);
+
+        if (responseAuthor.data.success) {
+            setUserForSearch(responseAuthor.data.data)
+        }
+
+
+    } */
+
+    const handler = async (event: any) => {
+        const value = event.target.value
+        console.log("searchBookByAuthor");
+        
+        console.log(value);
+        const credentials = {
+    
+            'key': value,
+        
+        }
+        var responseAuthor = await Api.postData("searchBookByAuthor",credentials);
+        console.log("user data from server");
+
+        console.log(responseAuthor.data.data);
+
+        if (responseAuthor.data.success) {
+            setbooks(responseAuthor.data.data);
+            setLinks(responseAuthor.data.data.links);
+        } 
+    
+    }
 
     return (
         <>
@@ -97,21 +216,14 @@ function Home() {
                 </div>
             </div>
             <div className="container-fluid">
-                <h3 className="text-dark mb-4">Liste des Livres</h3><a className="btn btn-success btn-icon-split my-2 rounded-8" role="button"><span className="text-white-50 icon"><i className="fas fa-book"></i></span><span className="text-white text">Créer Un livres</span></a>
+                <h3 className="text-dark mb-4">Liste des Livres</h3><a className="btn btn-success btn-icon-split my-2 rounded-8" data-bs-toggle="modal" data-bs-target="#createBook"><span className="text-white-50 icon"><i className="fas fa-book"></i></span><span className="text-white text">Créer Un livres</span></a>
                 <div className="card shadow">
                     <div className="card-body">
                         <div className="row">
-                            <div className="col-md-6 text-nowrap">
-                                <div id="dataTable_length" className="dataTables_length" aria-controls="dataTable"><label className="form-label">Auteur<select className="d-inline-block form-select form-select-sm" style={{ left: "12px",/*padding-left: 12px;*/marginLeft: "12px", }}>
-                                    <option value="10" selected={true}>10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>&nbsp;</label></div>
-                            </div>
-                            <div className="col-md-6">
-                                <div className="text-md-end dataTables_filter" id="dataTable_filter"><label className="form-label"><input type="search" className="form-control form-control-sm" aria-controls="dataTable" placeholder="Search" /></label></div>
-                            </div>
+                  
+                             <div className="col-md-12">
+                                <div className="text-md-end dataTables_filter" id="dataTable_filter"><label className="form-label">Nom de l'auteur ou de l'utilisateur<input type="text" className="form-control form-control-sm" aria-controls="dataTable" onChange={handler} placeholder="Search" /></label></div>
+                            </div> 
                         </div>
                         <div className="table-responsive table mt-2" id="dataTable-1" role="grid" aria-describedby="dataTable_info">
                             <table className="table my-0" id="dataTable">
@@ -122,7 +234,8 @@ function Home() {
                                         <th>Livre</th>
                                         <th>Nb Page</th>
                                         <th>Date Publication</th>
-                                        {/*  <th>telechargement</th> */}
+                                        <th>telechargement</th>
+                                        <th className="text-center filter-false sorter-false">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -132,10 +245,17 @@ function Home() {
                                                 {/* <img className="rounded-circle me-2" width="30" height="30" src="assets/img/avatars/avatar1.jpeg" /> */}
                                                 {item.author}</td>
                                             <td className={item.etat === 0 ? " text-danger" : ""}> {item.etat === 1 ? "Active" : "Inactive"}</td>
-                                            <td><img className="rounded-circle me-2" width="30" height="30" src={item.picture} />{item.title}</td>
+                                            <td><img className="rounded-circle me-2" width="70" height="70" src={item.picture} />{item.title}</td>
                                             <td>{item.numberOfPage}</td>
                                             <td>{item.releaseDate}</td>
-                                            {/*  <td>{item.id}</td> */}
+                                            <td>{item.id}</td>
+                                            <td className="text-center align-middle" style={{ maxHeight: "60px", height: "60px" }}>
+                                                <a type="button" data-bs-toggle="modal" data-bs-target="#Viewbook" className="btn btnMaterial btn-flat primary semicircle" onClick={() => (setUserInfo(item))}  ><i className="far fa-eye"></i></a>
+                                                <a type="button" className="btn btnMaterial btn-flat success semicircle" data-bs-toggle="modal" data-bs-target="#editbook" onClick={() => (setUserInfo(item))} ><i className="fas fa-pen"></i></a>
+                                                <a className="btn btnMaterial btn-flat accent btnNoBorders checkboxHover" role="button" style={{ marginLeft: "5px" }} data-bs-toggle="modal" data-bs-target="#delete-modal" href="#"><i className="fas fa-trash btnNoBorders" style={{ color: "#DC3545" }}></i></a>
+
+
+                                            </td>
                                         </tr>
                                     ))}
 
@@ -147,7 +267,8 @@ function Home() {
                                         <td><strong>Livre</strong></td>
                                         <td><strong>Nb Page</strong></td>
                                         <td><strong>Date publication</strong></td>
-                                        {/* <td><strong>Telechargement</strong></td> */}
+                                        <th>telechargement</th>
+                                        <th className="text-center filter-false sorter-false">Actions</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -161,7 +282,7 @@ function Home() {
                                     <ul className="pagination">
                                         {allLinks.map((item: any) =>
                                             <>
-                                                <li className={item.active ? "page-item active" : "page-item"} ><a className="page-link" href={item.url}>{item.label}</a></li>
+                                                <li className={item.active ? "page-item active" : "page-item"} ><a className="page-link" onClick={() => (getBooks(item.url))} >{item.label}</a></li>
                                             </>
 
                                         )}
@@ -176,7 +297,11 @@ function Home() {
                         </div>
                     </div>
                 </div>
-              
+                <BookAdd authors={{ authors }} category={{ category }} />
+
+                <BookView item={{ CurentAuthorData }} authors={{ authors }} />
+                <BookEdit item={{ CurentAuthorData }} category={{ category }} authors={{ authors }} />
+
                 <footer className="bg-white sticky-footer">
                     <div className="container my-auto">
                         <div className="text-center my-auto copyright"><span>By INNOV237 2022</span></div>
